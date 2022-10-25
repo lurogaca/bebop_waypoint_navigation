@@ -4,6 +4,7 @@ from std_msgs.msg import Empty
 from simple_pid import PID
 
 import time
+import sys
 
 
 #publishers to takeoff and land drone
@@ -21,14 +22,21 @@ def main():
     # Initialize node
     rospy.init_node('logger', anonymous=True)
    
+    myIn = input('press t to takeoff: ')
+
+    if myIn != 't':
+        print('Invalid input')
+        sys.exit(1)
     
     pub_takeoff.publish(Empty())
     print('takeoff')
+    
     time.sleep(5)
 
     # Subscribing to the mocap_node and the Odometry topic
     rospy.Subscriber('/mocap_node/bebop_0x/Odom', Odometry, callback)
 
+    
     
     input('Press enter to stop and land drone')
 
