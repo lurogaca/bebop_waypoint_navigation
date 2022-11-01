@@ -1,6 +1,7 @@
 import rospy
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Empty
+from geometry_msgs.msg import Twist
 from simple_pid import PID
 
 import time
@@ -12,6 +13,7 @@ import tf
 #publishers to takeoff and land drone
 pub_takeoff = rospy.Publisher(f'/bebop_0x/takeoff', Empty, queue_size=5)
 pub_land = rospy.Publisher(f'/bebop_0x/land', Empty, queue_size=5)
+velPub = rospy.Publisher(f'/bebop_0x/cmd_vel', Twist, queue_size=1)
 
 
 #running procedure for Drone
@@ -34,11 +36,21 @@ def callback(msg):
     # position variable that holds the x, y position as well as the yaw in radians of the drone.
     pos = [msg.pose.pose.position.x, msg.pose.pose.position.y, yaw_rad]
 
+    # Create Twist object to publish to drone
+    myTwist = Twist()
+
+    #example of how to set the velocities of the drone on each axis
+    myTwist.linear.x = 0
+    myTwist.linear.y = 0
+    myTwist.linear.z = 0
+    # Angular z is the heading of the drone
+    myTwist.angular.z = 0
+
+    #publish our Twist object to the Deones velocity topic
+    #NOTE: This will make the drone move if connection is secured
+    velPub.publish(myTwist)
 
 def main():
-    # Initialize node
-    rospy.init_node('logger', anonymous=True)
-   
 
     #force input from user to takeoff drones
     myIn = input('press t to takeoff: ')
@@ -70,8 +82,13 @@ def main():
 if __name__ == '__main__':
     print("Starting main()")
 
+    #initialize node for ros
     rospy.init_node('myNode')
+    
+    #wait for publishers to form
     time.sleep(2)
+
+    #run main
     main()
 
     print("Done!!")
