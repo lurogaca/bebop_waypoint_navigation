@@ -16,8 +16,14 @@ pub_land = rospy.Publisher(f'/bebop_0x/land', Empty, queue_size=5)
 velPub = rospy.Publisher(f'/bebop_0x/cmd_vel', Twist, queue_size=1)
 
 
+#variable to control the drone callback procedure
+procedureRun = False
+
+
 #running procedure for Drone
 def callback(msg):
+    global procedureRun
+
     # a quaternion is a 4 tuple that determines the orientation of an object.
     quaternion = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
     
@@ -46,11 +52,14 @@ def callback(msg):
     # Angular z is the heading of the drone
     myTwist.angular.z = 0
 
-    #publish our Twist object to the Deones velocity topic
-    #NOTE: This will make the drone move if connection is secured
-    velPub.publish(myTwist)
+    
+    if procedureRun:
+        #publish our Twist object to the Deones velocity topic
+        #NOTE: This will make the drone move if connection is secured
+        velPub.publish(myTwist)
 
 def main():
+    global procedureRun
 
     #force input from user to takeoff drones
     myIn = input('press t to takeoff: ')
@@ -64,15 +73,29 @@ def main():
     pub_takeoff.publish(Empty())
     print('takeoff')
     
-    time.sleep(3)
-
     # Subscribing to the mocap_node and the Odometry topic
     #NOTE: This starts the procedure in callback
     rospy.Subscriber('/mocap_node/bebop_0x/Odom', Odometry, callback)
 
-    
+
+    #force input from user to takeoff drones
+    myIn = input('press s to start procedure after 2 seconds: ')
+
+    #if not what is expected then exit the program
+    if myIn != 's':
+        print('Invalid input')
+        pub_land.publish(Empty())
+        sys.exit(1)
+
+
+    time.sleep(2)
+
+    procedureRun = True
+
     # wait for user input to land the drone and end program
     input('Press enter to stop and land drone')
+
+    procedureRun = False
 
     pub_land.publish(Empty())
 
